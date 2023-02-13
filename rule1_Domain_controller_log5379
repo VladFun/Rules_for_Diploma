@@ -1,0 +1,32 @@
+EVENTLOG = 'EventID="5379"' 
+COND = ($Provider['Name'] == "Microsoft-Windows-Security-Auditing")
+
+
+subject.id = $Data["SubjectUserSid"]
+subject.name = $Data["SubjectUserName"]
+subject.domain = $Data["SubjectDomainName"]
+subject.account.session_id = ($Data["SubjectLogonId"])
+
+object.fullpath = $Data["TargetName"]
+object.process.id = $Data["ClientProcessId"] 
+object.process.original_name = $Data["ReadOperation"]
+
+datafield1 = $Data["CountOfCredentialsReturned"] # Returned result
+datafield2 = $Data["ProcessCreationTime"] # Process Creation Time
+
+event_src.hostname = $Computer
+
+time = $TimeCreated['SystemTime']
+msgid = $EventRecordID
+importance = "low"
+
+subject = "account"
+action = "execute"
+object = "process"
+status = "success"
+
+event_src.vendor = "Microsoft"
+event_src.title = "Microsoft_Domain_controller"
+event_src.category = "Directory service"
+
+id = "MS_Domain_Controller_wineventlog_registration_log_5379"
