@@ -1,0 +1,41 @@
+JSON = 'Event.Event="_$Transaction$_.Rollback"'
+COND = (
+        $Event['ApplicationName'] == "Designer" or
+        $Event['ApplicationName'] == "1CV8C" or
+        $Event['ApplicationName'] == "1CV8" or
+        $Event['ApplicationName'] == "COMConnection" or
+        $Event['ApplicationName'] == "BackgroundJob"
+        )
+
+subject = "account"
+action = "rollback"
+object = "application"
+status = "success"
+
+subject.id = $Event['User']
+subject.name = $Event['UserName']
+object.name = $Event['ApplicationName']
+object.state = $Event['TransactionStatus']
+
+dst.hostname = $Event['ServerName']
+if $Event['Port'] != "0" then
+    dst.port = $Event['Port']
+endif
+
+datafield1 = $Event['Session']  # Working session ID
+datafield2 = $Event['TransactionID']  # Transaction ID
+
+if $Event['Data'] != "null" then
+    datafield3 = $Event['Data'] # Specific data
+endif
+
+time = $Event['Date']
+msgid = $Event['Event']
+importance = "medium"
+
+event_src.hostname = $Event['Computer']
+event_src.vendor =  "1c"
+event_src.title = "1c_enterprise"
+event_src.category = "Application server"
+
+id = "PT_1C_1C_Enterprise_filemonitor_registration_log_transaction_rollback"
