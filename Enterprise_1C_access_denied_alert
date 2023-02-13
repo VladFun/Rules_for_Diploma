@@ -1,0 +1,47 @@
+event rule2_1C_access_denied:
+    key:
+        event_src.hostname
+    filter {
+        correlation_name == null 
+        and event_src.title == "1c_enterprise"
+        and subject == "account"
+        and action == "access"
+        and object == "application"
+        and status == "failure"
+    } 
+
+    rule Suspicious_activity: (rule2_1C_access_denied[5]) within 1m
+    init {
+        $count.subevents = 0
+    }
+
+    on rule2_1C_access_denied {
+        $count.subevents = $count.subevents + 1
+        
+        $msgid = msgid
+        
+        $subject.id = subject.id
+        $subject.name = subject.name
+        $object.name = object.name
+        
+        $dst.hostname = dst.hostname
+        $dst.port = dst.port
+        
+        $event_src.vendor = event_src.vendor
+        $event_src.title = event_src.title
+        $event_src.category = event_src.category
+        
+        $datafield1 = datafield1  # Working session ID
+        $datafield2 = datafield2  # Specific data
+    }
+
+    emit {
+        $correlation_type = "incident"
+        $subject = "account"
+        $action = "access"
+        $object = "application"
+        $status = "failure"
+        
+        $importance = "high"
+        $category.generic = "Suspicious activity"
+}
