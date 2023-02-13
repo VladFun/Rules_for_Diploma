@@ -1,0 +1,73 @@
+query CheckSpecificValueWhitelist($hostname, $subject_user, $src_host) from MITRE_ATTCK_whitelist {
+    (host == $hostname or host == "*")
+    and (user_id == $subject_user or user_id == "*")
+    and (specific_value == $src_host or specific_value == "*")
+    and (rule == "Enterprise_1C_logon_of_significant_user" or rule == "*")
+}
+
+query IsUserSignificant($user) from enterprise_1c_significant_users {
+    user == $user
+}
+
+event Login_successful:
+    key:
+        event_src.host
+    filter {
+        event_src.title == "1c_enterprise"
+        and correlation_name == null
+        and action == "login"
+        and object == "application"
+        and status == "success"
+        and exec_query("IsUserSignificant", [lower(subject.name)])
+        and not exec_query("CheckSpecificValueWhitelist", [
+            lower(event_src.host),
+            lower(subject.name),
+            lower(src.host)
+        ])
+    }       
+    
+
+rule Enterprise_1C_logon_of_significant_user: Login_successful
+    on Login_successful {
+        $subject.name = subject.name
+        $subject.id = subject.id
+        
+        $object.name = object.name
+        
+        $src.ip = src.ip
+        $src.hostname = src.hostname
+        $src.host = src.host
+        $src.asset = src.asset
+
+        $datafield1 = datafield1  # Working session ID
+        $datafield2 = datafield2  # Hostname / System username
+        
+        $event_src.ip = event_src.ip
+        $event_src.hostname = event_src.hostname
+        $event_src.fqdn = event_src.fqdn
+        $event_src.host = event_src.host
+        $event_src.asset = event_src.asset
+        $event_src.vendor = event_src.vendor
+        $event_src.title = event_src.title
+        $event_src.subsys = event_src.subsys
+    } 
+
+emit { 
+    $correlation_type = "incident"
+
+    $subject = "account"
+    $action = "login"
+    $object = "system"
+    $status = "success"
+
+    $importance = "high"
+    
+    $category.generic = "Attack"
+    $category.high = "Initial Access"
+    $category.low = "Valid Accounts"
+
+    $incident.aggregation.key = join([$correlation_name, $event_src.host, $subject.name], "|")
+    $incident.severity = "high"
+    $incident.category = "Undefined" 
+    $incident.aggregation.timeout = 2h
+}
