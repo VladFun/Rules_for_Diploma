@@ -1,0 +1,31 @@
+TEXT = '{time = DATETIME} {$appname = WORD} {$servname = WORDDASH} {$dstip = IPV4} {$tmp1 = WORD} {$tmp2 = STRING} {$tmp3 = STRING} {$port = NUMBER} {$srcname = STRING} {$srcip = IPV4} {protocol = STRING} {$tmp4 = UNTIL(" - ")} {$tmp5 = REST}'
+
+COND = ($servname == "srvr-exchange")
+
+subject = "account"
+action = "initiate"
+object = "application"
+status = "success"
+
+
+object.name = $appname
+dst.hostname = $servname
+dst.ip = $dstip
+dst.port = $port
+
+src.hostname = $srcname
+src.ip = $srcip
+
+datafield1 = $tmp1 # Initialized request type 
+datafield2 = $tmp2 # 
+datafield3 = $tmp3 #
+#datafield4 = $tmp4 # Body of GET request
+datafield5 = $tmp5 #
+
+importance = "info"
+
+event_src.vendor =  "Microsoft"
+event_src.title = "Microsoft_Exchange_Server"
+event_src.category = "Application server"
+
+id = "MS_Exchange_filemonitor_registration_log"
